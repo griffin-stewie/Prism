@@ -13,6 +13,8 @@ var AndroidJavaFormatter, AndroidXMLFormatter, CLRFormatter, ColorFormatter, Col
 ColorFormatter = (function() {
   ColorFormatter.prototype.FORMATS = [];
 
+  ColorFormatter.prototype.FORMATS_BY_ID = [];
+
   ColorFormatter.prototype.colorClassifier = new ColorClassifier();
 
   function ColorFormatter() {
@@ -21,6 +23,7 @@ ColorFormatter = (function() {
     **************** FORMATS ****************
       HERE is when you have to do the implementation of the new format you want to add.
      */
+    var format, i, len, ref;
     this.FORMATS.push(new HexFormatter());
     this.FORMATS.push(new RGBACSSFormatter());
     this.FORMATS.push(new SASSFormatter());
@@ -30,6 +33,11 @@ ColorFormatter = (function() {
     this.FORMATS.push(new UIColorObjCFormatter());
     this.FORMATS.push(new AndroidJavaFormatter());
     this.FORMATS.push(new AndroidXMLFormatter());
+    ref = this.FORMATS;
+    for (i = 0, len = ref.length; i < len; i++) {
+      format = ref[i];
+      this.FORMATS_BY_ID[format.id()] = format;
+    }
   }
 
 
@@ -106,6 +114,12 @@ ColorFormatter = (function() {
     return responseCode;
   };
 
+  ColorFormatter.prototype.formatColorDictionary_withFormat_commented = function(colorDictionary, format, commented) {
+    var formatter;
+    formatter = this.FORMATS_BY_ID[format];
+    return formatter.formatText(colorDictionary, commented);
+  };
+
 
   /*
     Takes a MSColor and a name or alias and packs it on a dictionary representation that can be then saved on a layer using the PluginCommand
@@ -148,6 +162,7 @@ ColorFormatter = (function() {
  FormatterBase
 
  Base class for each type of formatters. Template Pattern.
+ the ID must be unique, the name is a human readable mini description, the format is used to use a custom file extension when saving colors to a file
  */
 
 FormatterBase = (function() {
@@ -156,6 +171,15 @@ FormatterBase = (function() {
   FormatterBase.EXPORT_TYPE_FILE = "file";
 
   FormatterBase.EXPORT_TYPE_FILES = "files";
+
+
+  /*
+   id
+  
+   Override this at Subclass.
+   */
+
+  FormatterBase.prototype.id = function() {};
 
 
   /*
@@ -274,6 +298,10 @@ HexFormatter = (function(superClass) {
     return HexFormatter.__super__.constructor.apply(this, arguments);
   }
 
+  HexFormatter.prototype.id = function() {
+    return "HEX";
+  };
+
   HexFormatter.prototype.name = function() {
     return "HEX CSS";
   };
@@ -302,6 +330,10 @@ RGBACSSFormatter = (function(superClass) {
   function RGBACSSFormatter() {
     return RGBACSSFormatter.__super__.constructor.apply(this, arguments);
   }
+
+  RGBACSSFormatter.prototype.id = function() {
+    return "RGBA_CSS";
+  };
 
   RGBACSSFormatter.prototype.name = function() {
     return "RGBA CSS";
@@ -333,6 +365,10 @@ SASSFormatter = (function(superClass) {
     return SASSFormatter.__super__.constructor.apply(this, arguments);
   }
 
+  SASSFormatter.prototype.id = function() {
+    return "SASS";
+  };
+
   SASSFormatter.prototype.name = function() {
     return "SASS variables";
   };
@@ -358,6 +394,10 @@ UIColorSwiftFormatter = (function(superClass) {
   function UIColorSwiftFormatter() {
     return UIColorSwiftFormatter.__super__.constructor.apply(this, arguments);
   }
+
+  UIColorSwiftFormatter.prototype.id = function() {
+    return "UICOLOR_SWIFT";
+  };
 
   UIColorSwiftFormatter.prototype.name = function() {
     return "UIColor (Swift)";
@@ -392,6 +432,10 @@ UIColorObjCFormatter = (function(superClass) {
     return UIColorObjCFormatter.__super__.constructor.apply(this, arguments);
   }
 
+  UIColorObjCFormatter.prototype.id = function() {
+    return "UICOLOR_OBJC";
+  };
+
   UIColorObjCFormatter.prototype.name = function() {
     return "UIColor (Objective-C)";
   };
@@ -425,6 +469,10 @@ AndroidJavaFormatter = (function(superClass) {
     return AndroidJavaFormatter.__super__.constructor.apply(this, arguments);
   }
 
+  AndroidJavaFormatter.prototype.id = function() {
+    return "ANDROID";
+  };
+
   AndroidJavaFormatter.prototype.name = function() {
     return "Android ARGB (Java code)";
   };
@@ -454,6 +502,10 @@ AndroidXMLFormatter = (function(superClass) {
     return AndroidXMLFormatter.__super__.constructor.apply(this, arguments);
   }
 
+  AndroidXMLFormatter.prototype.id = function() {
+    return "ANDROID_XML";
+  };
+
   AndroidXMLFormatter.prototype.name = function() {
     return "Android ARGB (XML)";
   };
@@ -479,6 +531,10 @@ CLRFormatter = (function(superClass) {
   function CLRFormatter() {
     return CLRFormatter.__super__.constructor.apply(this, arguments);
   }
+
+  CLRFormatter.prototype.id = function() {
+    return "CLR";
+  };
 
   CLRFormatter.prototype.name = function() {
     return "CLR (Color Lists)";
