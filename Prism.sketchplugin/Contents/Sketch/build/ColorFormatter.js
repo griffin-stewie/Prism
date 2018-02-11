@@ -6,7 +6,7 @@
   it also has the logic to display the color formatter dialog and some class methods to transform a MSColor
   to a color Dictionary that can be saved in a layer
  */
-var AndroidJavaFormatter, AndroidXMLFormatter, CLRFormatter, ColorFormatter, FormatterBase, HexFormatter, RGBACSSFormatter, SASSFormatter, UIColorObjCFormatter, UIColorSwiftFormatter,
+var AndroidJavaFormatter, AndroidXMLFormatter, CLRFormatter, ColorFormatter, ColorSetFormatter, FormatterBase, HexFormatter, RGBACSSFormatter, SASSFormatter, UIColorObjCFormatter, UIColorSwiftFormatter,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
 
@@ -25,6 +25,7 @@ ColorFormatter = (function() {
     this.FORMATS.push(new RGBACSSFormatter());
     this.FORMATS.push(new SASSFormatter());
     this.FORMATS.push(new CLRFormatter());
+    this.FORMATS.push(new ColorSetFormatter());
     this.FORMATS.push(new UIColorSwiftFormatter());
     this.FORMATS.push(new UIColorObjCFormatter());
     this.FORMATS.push(new AndroidJavaFormatter());
@@ -38,7 +39,7 @@ ColorFormatter = (function() {
    */
 
   ColorFormatter.prototype.showDialogWithColorDictionaries = function(colorDictionaries) {
-    var accessory, alert, allColorsString, copyButton, formatObj, names, pasteboard, responseCode, savePanel, selection, types;
+    var accessory, alert, allColorsString, copyButton, formatObj, names, panel, pasteboard, responseCode, savePanel, selection, types;
     names = this.FORMATS.map(function(enc) {
       return enc.name();
     });
@@ -79,8 +80,20 @@ ColorFormatter = (function() {
               formatObj.exportAsFile(colorDictionaries, savePanel.URL());
             }
             break;
+          case FormatterBase.EXPORT_TYPE_FILES:
+            panel = NSOpenPanel.openPanel();
+            panel.prompt = "Export";
+            panel.message = "Choose export directory";
+            panel.canChooseFiles = false;
+            panel.canChooseDirectories = true;
+            panel.allowsMultipleSelection = false;
+            panel.canCreateDirectories = true;
+            if (panel.runModal()) {
+              formatObj.exportAsFile(colorDictionaries, panel.URL());
+            }
+            break;
           default:
-            log("Not implemented CLR");
+            log("Unknown type");
         }
         break;
       case 1001:
@@ -140,9 +153,9 @@ ColorFormatter = (function() {
 FormatterBase = (function() {
   function FormatterBase() {}
 
-  FormatterBase.prototype.EXPORT_TYPE_FILE = "file";
+  FormatterBase.EXPORT_TYPE_FILE = "file";
 
-  FormatterBase.prototype.EXPORT_TYPE_FILES = "files";
+  FormatterBase.EXPORT_TYPE_FILES = "files";
 
 
   /*
@@ -495,5 +508,80 @@ CLRFormatter = (function(superClass) {
   };
 
   return CLRFormatter;
+
+})(FormatterBase);
+
+ColorSetFormatter = (function(superClass) {
+  extend(ColorSetFormatter, superClass);
+
+  function ColorSetFormatter() {
+    return ColorSetFormatter.__super__.constructor.apply(this, arguments);
+  }
+
+  ColorSetFormatter.prototype.name = function() {
+    return "Color set (Xcode named color)";
+  };
+
+  ColorSetFormatter.prototype.type = function() {
+    return this.constructor.EXPORT_TYPE_FILES;
+  };
+
+  ColorSetFormatter.prototype.supportClipboard = function() {
+    return false;
+  };
+
+  ColorSetFormatter.prototype.exportAsFile = function(colorDictionaries, url) {
+    var colorDictionary, colorsetURL, fileName, fileString, i, len, manager, name, obj, path, results;
+    manager = NSFileManager.defaultManager();
+    results = [];
+    for (i = 0, len = colorDictionaries.length; i < len; i++) {
+      colorDictionary = colorDictionaries[i];
+      obj = this.contentsJSON(colorDictionary);
+      name = colorDictionary.name.toLowerCase().trim().split(" ").join("_");
+      fileName = name + ".colorset";
+      colorsetURL = url.URLByAppendingPathComponent(fileName);
+      manager.createDirectoryAtPath_withIntermediateDirectories_attributes_error(colorsetURL.path(), true, null, null);
+      path = colorsetURL.path();
+      fileString = NSString.stringWithString(JSON.stringify(obj));
+      results.push(fileString.writeToFile_atomically_encoding_error(path + "/Contents.json", true, NSUTF8StringEncoding, null));
+    }
+    return results;
+  };
+
+  ColorSetFormatter.prototype.contentsJSON = function(colorDictionary) {
+    var c, obj;
+    c = this.colorObject(colorDictionary);
+    return obj = {
+      info: {
+        version: 1,
+        author: "com.ment.sketch.prism"
+      },
+      colors: [c]
+    };
+  };
+
+  ColorSetFormatter.prototype.colorObject = function(colorDictionary) {
+    var color, obj;
+    color = {
+      "color-space": "display-p3",
+      components: this.colorComponents(colorDictionary)
+    };
+    return obj = {
+      idiom: "universal",
+      color: color
+    };
+  };
+
+  ColorSetFormatter.prototype.colorComponents = function(colorDictionary) {
+    var obj;
+    return obj = {
+      red: parseFloat(colorDictionary.red).toFixed(3),
+      green: parseFloat(colorDictionary.green).toFixed(3),
+      blue: parseFloat(colorDictionary.blue).toFixed(3),
+      alpha: parseFloat(colorDictionary.alpha).toFixed(3)
+    };
+  };
+
+  return ColorSetFormatter;
 
 })(FormatterBase);
