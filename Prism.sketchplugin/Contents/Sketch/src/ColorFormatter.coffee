@@ -26,6 +26,7 @@ class ColorFormatter
     @FORMATS.push new UIColorObjCFormatter()
     @FORMATS.push new AndroidJavaFormatter()
     @FORMATS.push new AndroidXMLFormatter()
+    @FORMATS.push new SketchMeasureFormatter()
 
     for format in @FORMATS
       @FORMATS_BY_ID[format.id()] = format
@@ -345,3 +346,37 @@ class CLRFormatter extends FormatterBase
       colorList.setColor_forKey(color, colorDictionary.name)
 
     colorList.writeToFile(url.path())
+
+class SketchMeasureFormatter extends FormatterBase
+  # Sketch Measure - Make it a fun to create spec for developers and teammates http://utom.design/measure/
+  id: ->
+    "SKETCHMESURE_JSON"
+  name: ->
+    "Sketch Measure (JSON)"
+  format: ->
+    "colors.json"
+
+  supportClipboard: ->
+    true
+
+  exportAsString: (colorDictionaries) ->
+    root = []
+    for colorDictionary in colorDictionaries
+      log colorDictionary
+      obj =
+         "name": "#{colorDictionary.name}"
+         "color": @colorToDictionaryToJSON(colorDictionary)
+      root.push obj
+
+    JSON.stringify(root, undefined, 4)
+
+  colorToDictionaryToJSON: (colorDictionary) ->
+    json =
+      r: Math.round(colorDictionary.red * 255)
+      g: Math.round(colorDictionary.green * 255)
+      b: Math.round(colorDictionary.blue * 255)
+      a: (Math.round(colorDictionary.alpha * 100) / 100)
+      "color-hex": "\##{colorDictionary.hex} " + "#{Math.round(colorDictionary.alpha * 100)}%",
+      "argb-hex": "\##{helperHex(colorDictionary.alpha * 255) + colorDictionary.hex}",
+      "css-rgba": "rgba(#{Math.round(colorDictionary.red * 255)},#{Math.round(colorDictionary.green * 255)},#{Math.round(colorDictionary.blue * 255)},#{Math.round(colorDictionary.alpha * 100) / 100})"
+      "ui-color": "(r:#{(Math.round(colorDictionary.red * 100) / 100).toFixed(2)} g:#{(Math.round(colorDictionary.green * 100) / 100).toFixed(2)} b:#{(Math.round(colorDictionary.blue * 100) / 100).toFixed(2)} a:#{(Math.round(colorDictionary.alpha * 100) / 100).toFixed(2)})"
