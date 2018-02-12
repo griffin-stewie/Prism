@@ -6,7 +6,7 @@
   it also has the logic to display the color formatter dialog and some class methods to transform a MSColor
   to a color Dictionary that can be saved in a layer
  */
-var AndroidJavaFormatter, AndroidXMLFormatter, CLRFormatter, ColorFormatter, ColorSetFormatter, FormatterBase, HexFormatter, RGBACSSFormatter, SASSFormatter, UIColorObjCFormatter, UIColorSwiftFormatter,
+var AndroidJavaFormatter, AndroidXMLFormatter, CLRFormatter, ColorFormatter, ColorSetFormatter, FormatterBase, HexFormatter, RGBACSSFormatter, SASSFormatter, SketchMeasureFormatter, UIColorObjCFormatter, UIColorSwiftFormatter,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
 
@@ -33,6 +33,7 @@ ColorFormatter = (function() {
     this.FORMATS.push(new UIColorObjCFormatter());
     this.FORMATS.push(new AndroidJavaFormatter());
     this.FORMATS.push(new AndroidXMLFormatter());
+    this.FORMATS.push(new SketchMeasureFormatter());
     ref = this.FORMATS;
     for (i = 0, len = ref.length; i < len; i++) {
       format = ref[i];
@@ -652,5 +653,61 @@ ColorSetFormatter = (function(superClass) {
   };
 
   return ColorSetFormatter;
+
+})(FormatterBase);
+
+SketchMeasureFormatter = (function(superClass) {
+  extend(SketchMeasureFormatter, superClass);
+
+  function SketchMeasureFormatter() {
+    return SketchMeasureFormatter.__super__.constructor.apply(this, arguments);
+  }
+
+  SketchMeasureFormatter.prototype.id = function() {
+    return "SKETCHMESURE_JSON";
+  };
+
+  SketchMeasureFormatter.prototype.name = function() {
+    return "Sketch Measure (JSON)";
+  };
+
+  SketchMeasureFormatter.prototype.format = function() {
+    return "colors.json";
+  };
+
+  SketchMeasureFormatter.prototype.supportClipboard = function() {
+    return true;
+  };
+
+  SketchMeasureFormatter.prototype.exportAsString = function(colorDictionaries) {
+    var colorDictionary, i, len, obj, root;
+    root = [];
+    for (i = 0, len = colorDictionaries.length; i < len; i++) {
+      colorDictionary = colorDictionaries[i];
+      log(colorDictionary);
+      obj = {
+        "name": "" + colorDictionary.name,
+        "color": this.colorToDictionaryToJSON(colorDictionary)
+      };
+      root.push(obj);
+    }
+    return JSON.stringify(root, void 0, 4);
+  };
+
+  SketchMeasureFormatter.prototype.colorToDictionaryToJSON = function(colorDictionary) {
+    var json;
+    return json = {
+      r: Math.round(colorDictionary.red * 255),
+      g: Math.round(colorDictionary.green * 255),
+      b: Math.round(colorDictionary.blue * 255),
+      a: Math.round(colorDictionary.alpha * 100) / 100,
+      "color-hex": ("\#" + colorDictionary.hex + " ") + ((Math.round(colorDictionary.alpha * 100)) + "%"),
+      "argb-hex": "\#" + (helperHex(colorDictionary.alpha * 255) + colorDictionary.hex),
+      "css-rgba": "rgba(" + (Math.round(colorDictionary.red * 255)) + "," + (Math.round(colorDictionary.green * 255)) + "," + (Math.round(colorDictionary.blue * 255)) + "," + (Math.round(colorDictionary.alpha * 100) / 100) + ")",
+      "ui-color": "(r:" + ((Math.round(colorDictionary.red * 100) / 100).toFixed(2)) + " g:" + ((Math.round(colorDictionary.green * 100) / 100).toFixed(2)) + " b:" + ((Math.round(colorDictionary.blue * 100) / 100).toFixed(2)) + " a:" + ((Math.round(colorDictionary.alpha * 100) / 100).toFixed(2)) + ")"
+    };
+  };
+
+  return SketchMeasureFormatter;
 
 })(FormatterBase);
