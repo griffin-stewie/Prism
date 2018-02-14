@@ -446,7 +446,7 @@ class SketchMeasureFormatter extends FormatterBase
     for colorDictionary in colorDictionaries
       log colorDictionary
       obj =
-         "name": "#{colorDictionary.name}"
+         "name": "#{colorDictionary.name.trim()}"
          "color": @colorToDictionaryToJSON(colorDictionary)
       root.push obj
 

@@ -686,7 +686,7 @@ SketchMeasureFormatter = (function(superClass) {
       colorDictionary = colorDictionaries[i];
       log(colorDictionary);
       obj = {
-        "name": "" + colorDictionary.name,
+        "name": "" + (colorDictionary.name.trim()),
         "color": this.colorToDictionaryToJSON(colorDictionary)
       };
       root.push(obj);
